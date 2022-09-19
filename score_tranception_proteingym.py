@@ -20,10 +20,10 @@ def get_parser():
     parser.add_argument("--tokenizer_path",
                         default=os.path.join(dir_path, "tranception/utils/tokenizers/Basic_tokenizer"))
 
-    # # We may pass in all required information about the DMS via the provided reference files, or specify all relevant fields manually
-    # parser.add_argument('--DMS_reference_file_path', default=None, type=str,
-    #                     help='Path to reference file with list of DMS to score')
-    # parser.add_argument('--DMS_index', default=0, type=int, help='Index of DMS assay in reference file')
+    # We may pass in all required information about the DMS via the provided reference files, or specify all relevant fields manually
+    parser.add_argument('--DMS_reference_file_path', default=None, type=str,
+                        help='Path to reference file with list of DMS to score')
+    parser.add_argument('--DMS_index', default=0, type=int, help='Index of DMS assay in reference file')
     # Fields to be passed manually if reference file is not used
     parser.add_argument('--target_seq', default=None, type=str,
                         help='Full wild type sequence that is mutated in the DMS asssay')
