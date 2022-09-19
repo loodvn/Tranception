@@ -11,6 +11,7 @@ from tranception import config, model_pytorch
 
 dir_path = os.path.dirname(os.path.abspath(__file__))
 
+
 def main():
     """
     Main script to score sets of mutated protein sequences (substitutions or indels) with Tranception.
@@ -26,6 +27,8 @@ def main():
     #Fields to be passed manually if reference file is not used
     parser.add_argument('--target_seq', default=None, type=str, help='Full wild type sequence that is mutated in the DMS asssay')
     parser.add_argument('--DMS_file_name', default=None, type=str, help='Name of DMS assay file')
+    parser.add_argument('--mutant_column', default=None, type=str,
+                        help='Column name for mutant column in sequence file; note that in indel mode mutants have to be the full sequence')
     parser.add_argument('--MSA_filename', default=None, type=str, help='Name of MSA (eg., a2m) file constructed on the wild type sequence')
     parser.add_argument('--MSA_weight_file_name', default=None, type=str, help='Weight of sequences in the MSA (optional)')
     parser.add_argument('--MSA_start', default=None, type=int, help='Sequence position that the MSA starts at (1-indexing)')
@@ -69,7 +72,8 @@ def main():
     else:
         target_seq=args.target_seq
         DMS_file_name=args.DMS_file_name
-        DMS_id = DMS_file_name.split(".")[0]
+        DMS_basename = os.path.basename(DMS_file_name)
+        DMS_id = DMS_basename.split(".")[0]
         if args.inference_time_retrieval:
             MSA_data_file = args.MSA_folder + os.sep + args.MSA_filename if args.MSA_folder is not None else None
             MSA_weight_file_name = args.MSA_weights_folder + os.sep + args.MSA_weight_file_name if args.MSA_weights_folder is not None else None
@@ -113,6 +117,18 @@ def main():
     scoring_filename += os.sep + DMS_id + '.csv'
     
     DMS_data = pd.read_csv(args.DMS_data_folder + os.sep + DMS_file_name, low_memory=False)
+
+    if args.mutant_column is not None:
+        # it's simpler to just rename the mutant column to 'mutant' than to change all the internal code
+        assert args.mutant_column in DMS_data.columns, DMS_data.columns
+        expected_mutant_column = 'mutant' if not args.indel_mode else 'mutated_sequence'
+
+        if args.mutant_column != expected_mutant_column:
+            # If both 'mutant' and our preferred args.mutant_column exist, keep the original mutant as mutant_old
+            if expected_mutant_column in DMS_data.columns:
+                DMS_data = DMS_data.rename(columns={expected_mutant_column: f"{expected_mutant_column}_old"})
+            DMS_data = DMS_data.rename(columns={args.mutant_column: expected_mutant_column})
+
     all_scores = model.score_mutants(
                                     DMS_data=DMS_data, 
                                     target_seq=target_seq, 
@@ -122,6 +138,7 @@ def main():
                                     indel_mode=args.indel_mode
                                     )
     all_scores.to_csv(scoring_filename, index=False)
+
 
 if __name__ == '__main__':
     main()

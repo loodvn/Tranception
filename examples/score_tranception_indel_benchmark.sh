@@ -26,4 +26,3 @@ python3 ../score_tranception_proteingym.py \
                 --inference_time_retrieval \
                 --MSA_folder ${MSA_folder} \
                 --MSA_weights_folder ${MSA_weights_folder} 
-                
